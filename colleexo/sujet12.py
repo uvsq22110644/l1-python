@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 import tkinter as tk
 
 ##################
@@ -6,9 +7,7 @@ import tkinter as tk
 LARGEUR = 600
 HAUTEUR = 400
 
-# autres
-est_rond = True
-cpt = 0
+cpt = 0 
 
 ###################
 # Fonctions
@@ -26,49 +25,48 @@ def creer_balle():
 def mouvement():
     """Déplace la balle et ré-appelle la fonction avec un compte-à-rebours"""
     rebond()
+    changement_couleur()
     compteur()
     canvas.move(balle[0], balle[1], balle[2])
     canvas.after(20, mouvement)
 
 
-
 def rebond():
     """Fait rebondir la balle sur les bords du canevas"""
-    global balle
+    global balle, cpt
     x0, y0, x1, y1 = canvas.coords(balle[0])
     if x0 <= 0 or x1 >= 600:
         balle[1] = -balle[1]
+        cpt += 1
     if y0 <= 0 or y1 >= 400:
         balle[2] = -balle[2]
+        cpt += 1
+
+def zones():
+    """crée 4 zones"""
+    rec_r = canvas. create_rectangle(0, 0, 150, 50, fill="red")
+    rec_v = canvas. create_rectangle(150, 0, 300, 50, fill="green")
+    rec_b = canvas. create_rectangle(300, 0, 450, 50, fill="blue")
+    rec_j = canvas. create_rectangle(450, 0, 600, 50, fill="yellow")
+
+def changement_couleur():
+    x0, y0, x1, y1 = canvas.coords(balle[0])
+    if y0 <= 30:
+        if 0<=x0 and x0<=150:
+            canvas.itemconfigure(balle[0], fill="red")
+        elif 150<=x0 and x0<=300:
+            canvas.itemconfigure(balle[0], fill="green")
+        elif 300<=x0 and x0<=450:
+            canvas.itemconfigure(balle[0], fill="blue")
+        elif 450<=x0 and x0<=600:
+            canvas.itemconfigure(balle[0], fill="yellow")
+    elif y1 >= 400:
+        canvas.itemconfigure(balle[0], fill="white")
 
 def compteur():
     global cpt
-    x0, y0, x1, y1 = canvas.coords(balle[0])
-    if x0 <= 0 or x1 >= 600 or y0 <= 0 or y1 >= 400 :
-        cpt += 1
-    transformation()
-
-
-def transformation():
-    global l, est_rond, cpt
-    if cpt % 5 == 0 and cpt != 0 and cpt != 30:
-        canvas.after(transformation)
-        if est_rond:
-            l = canvas.coords(balle[0])
-            canvas.delete(balle[0])
-            balle[0] = canvas.create_rectangle(l[0], l[1], l[2], l[3], fill="blue")
-            l = []
-            est_rond = False
-        else:
-            l = canvas.coords(balle[0])
-            canvas.delete(balle[0])
-            balle[0] = canvas.create_oval(l[0], l[1], l[2], l[3], fill="blue")
-            l = []
-            est_rond = True
-    elif cpt == 30:
+    if cpt == 30:
         canvas.delete(balle[0])
-
-
 
 ######################
 # programme principal
@@ -83,8 +81,7 @@ balle = creer_balle()
 
 # déplacement de la balle
 mouvement()
-
-
+zones()
 
 
 # boucle principale

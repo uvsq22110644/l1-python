@@ -32,7 +32,7 @@ def demarrer():
 
 def mouvement():
     global cont
-    rebond()
+    rebond2()
     canvas.move(balle[0],balle[1],balle[2])
     cont = racine.after(20, mouvement)
 
