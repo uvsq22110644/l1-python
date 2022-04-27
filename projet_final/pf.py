@@ -21,6 +21,8 @@ grille = []
 fin = False
 global prenom1
 l_coup = []
+retour = False
+colonne_impossible = False
 
 
 #création liste à deux dimensions
@@ -75,25 +77,38 @@ def trouver_ligne(colonne):
     return ligne
 
 def gestion_clic(event):
-    """affiche le jeton dans la grille"""
-    global joueur1, fin, ligne, colonne
-    grille_pleine()
+    """affiche le jeton dans la grille si cela est possible"""
+    global joueur1, fin, ligne, colonne, retour, colonne_impossible, numero_colonne
     if fin == True:
         return
+  #  if colonne_impossible:
+  #      colonne_impossible = False
+  #      return
     if 0<event.x<W and 0<event.y<H :
         clic_x = event.x
         colonne = trouver_colonne(clic_x)
         ligne = trouver_ligne(colonne)
+  #      colonne_pleine(colonne)
+  #      if colonne_impossible:
+  #          colonne_impossible = False
+  #          return
         if joueur1:
-            canvas.create_oval(colonne*100+5, ligne*100+5, colonne*100+100-5, ligne*100+100-5, fill ="yellow")
+            canvas.create_oval(colonne*100+5, ligne*100+5, colonne*100+100-5, ligne*100+100-5, fill ="gold")
             grille[ligne][colonne] = 1
             joueur1 = not joueur1
+            if retour == True :
+                retour = False          
         else:
             canvas.create_oval(colonne*100+5, ligne*100+5, colonne*100+100-5, ligne*100+100-5, fill="red")
             grille[ligne][colonne] = 2
-            joueur1 = True
+            joueur1 = not joueur1
+            if retour == True:
+                 retour = False
+    #numero_colonne = colonne
     alignement(ligne, colonne)
     dernier_coup()
+    grille_pleine()
+    #colonne_pleine(colonne)
 
 
 def alignement(ligne, colonne):
@@ -142,10 +157,14 @@ def alignement(ligne, colonne):
         
 
 def colonne_pleine(colonne):
+    global colonne_impossible
     """vérifie si la colonne que le joueur a choisie est pleine ou non"""
+    nb_col = 0
     for i in range(m):
-        if grille[i][colonne] == 0:
-                pass
+        if grille[i][colonne] == 1 or grille[i][colonne] == 2:
+            nb_col += 1
+    if nb_col == m:
+        colonne_impossible = True
 
 def grille_pleine():
     global nb_pions
@@ -155,12 +174,12 @@ def grille_pleine():
         for j in range(n): 
            if grille[i][j] == 1 or grille[i][j] == 2:
                nb_pions += 1
-           if nb_pions == n*m:
-               fin_du_jeu()
+    if nb_pions == n*m:
+        fin_du_jeu_nul()
 
 
 def fin_du_jeu():
-    """affiche quel joueur à gagner (s'il y en a un) et arrête le jeu"""
+    """affiche quel joueur à gagner et arrête le jeu"""
     global fin
     fin = True
     if id_joueur == 1:
@@ -170,31 +189,61 @@ def fin_du_jeu():
             label_gagnant.config(text= prenom2 + " a gagné ", font="20")
         else:
             label_gagnant.config(text= prenom1 + " a gagné", font="20")
-    elif nb_pions == n*m:
-        label_gagnant.config(text= "Il n'y a aucun gagnant", font="20")
+
+
+def fin_du_jeu_nul():
+    """affiche qu'il n'y a aucun joueur et arrête le jeu"""
+    global fin
+    fin = True
+    label_gagnant.config(text= "Il n'y a aucun gagnant", font="20")
 
 def dernier_coup():
     """rajoute dans une liste les coordonnées du dernier coup """
     l_coup.extend([ligne, colonne])
 
-def retour():
+def retour_1():
     """annule le dernier coup et change le numéro dans la grille"""
+    global retour , joueur1
     grille[l_coup[-2]][l_coup[-1]] = 0
     canvas.create_oval(l_coup[-1]*100+5, l_coup[-2]*100+5, l_coup[-1]*100+100-5, l_coup[-2]*100+100-5, fill="white")
+    joueur1 = not joueur1
     del l_coup[-1]
     del l_coup[-1]
+    retour = True
 
 def sauvegarde():
     """ Ecrit la grille dans le fichier sauvegarde.txt """
     fic = open("sauvegarde.txt", "w")
-    fic.write(str(grille))
+    for i in range(m):
+        fic.write(str(grille[i]) + "\n")
     fic.close() 
 
 def charger():
-    """Lit le fichier sauvegarde.txt et met à jour la grille en conséquence (modifie l'affichage)"""
+    """Lit le fichier sauvegarde.txt, récupère la grille et met à jour la grille en conséquence (modifie l'affichage)"""
+    grille1 = []  # liste qui contient tous les nombres de la grille
+    grille2 = []  # liste qui contient les sous listes de nombres
     fic = open("sauvegarde.txt", "r")
-
+    while True:
+         ligne = fic.readline()
+         if ligne == "":
+             break
+         for i in ligne:
+             if i =="0" or i =="1" or i =="2":
+                 grille1.append(int(i))
+    for i in range(m):
+         grille2.extend([[grille1[i] for i in range(n)]])
+         for j in range(n):
+             del grille1[0]
     fic.close()
+    for i in range(m):
+        for j in range(n):
+            if grille2[i][j] == 1:  
+                canvas.create_oval(j*100+5, i*100+5, j*100+100-5, i*100+100-5, fill="gold")
+            elif grille2[i][j] == 2:
+                canvas.create_oval(j*100+5, i*100+5, j*100+100-5, i*100+100-5, fill="red")
+
+
+
     
 
 
@@ -211,8 +260,9 @@ def charger():
 # création des widgets
 racine = tk.Tk()
 canvas = tk.Canvas(racine, height=H, width=W, bg="blue")
-bouton_retour = tk.Button(racine, command=retour, text="retour")
+bouton_retour = tk.Button(racine, command=retour_1, text="retour")
 bouton_sauvegarde = tk.Button(racine, command=sauvegarde, text="sauvegarde")
+bouton_charger = tk.Button(racine, command=charger, text="charger")
 label_joueur = tk.Label(racine, text= " puissance 4 ", padx=20, pady=20, borderwidth=5, font = ("helvetica", "20")) 
 label_gagnant = tk.Label(racine)
 
@@ -221,12 +271,14 @@ racine.grid()
 canvas.grid(rowspan=10)
 bouton_retour.grid(column=1, row=6)
 bouton_sauvegarde.grid(column=1, row=7)
+bouton_charger.grid(column=1, row = 8)
 label_joueur.grid(column=1,row=0)
 label_gagnant.grid(column=1, row=3)
 
 # fonctions
 creation_grille()
 affiche_joueur()
+
 
 # gestions clic
 canvas.bind("<Button-1>", gestion_clic)
