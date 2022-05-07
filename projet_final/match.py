@@ -219,17 +219,16 @@ def grille_pleine():
 
 
 def fin_du_jeu():
-    """affiche quel joueur à gagner et arrête le jeu OU 
-       BIEN """
+    """affiche quel joueur à gagner et arrête le jeu """
     global fin, une_manche
     if une_manche == False:
         fin = False
         score()
     if une_manche:
         if id_joueur == 1:
-            label_gagnant.config(text=premier_joueur + " a gagné", font="20")
+            label_gagnant.config(text=premier_joueur + " a gagné", font="20", padx=20)
         elif id_joueur == 2:
-            label_gagnant.config(text=deuxieme_joueur + " a gagné ", font="20")
+            label_gagnant.config(text=deuxieme_joueur + " a gagné ", font="20", padx=20)
         label_joueur.config(text="")
         fin = True
 
