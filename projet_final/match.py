@@ -25,6 +25,8 @@ colonne_impossible = False
 charger_partie = False
 joueur1 = True  # permet changement joueur, joueur1 = True correspond à premier_joueur
 partie_finie = False
+une_manche = True
+fin_manche = False
 
 
 # création liste à deux dimensions
@@ -69,6 +71,7 @@ def affiche_joueur():
     label_joueur.config(text=premier_joueur + " commence à jouer")
 
 
+
 def choix_partie():
     """Demande à l'utilisateur s'il veut charger la partie précédente
        ou bien en faire une nouvelle et appelle la 
@@ -105,7 +108,7 @@ def trouver_ligne(colonne):
 
 def gestion_clic(event):
     """affiche le jeton dans la grille si cela est possible"""
-    global joueur1, fin, ligne, colonne, retour, colonne_impossible, partie_finie
+    global joueur1, fin, ligne, colonne, retour, colonne_impossible, partie_finie, nb_parties
     if fin:   # 4 pions déjà alignés ou grille pleine
         return
     if partie_finie:  # chargement partie déjà terminée
@@ -186,7 +189,7 @@ def alignement(ligne, colonne):
         if cpt == 4:
             fin_du_jeu()
     while (colonne - cpt >= 0 and ligne - cpt >= 0 and 
-           grille[ligne-cpt][colonne - cpt] == id_joueur):  # haut gauche
+           grille[ligne - cpt][colonne - cpt] == id_joueur):  # haut gauche
         cpt += 1
         if cpt == 4:
             fin_du_jeu()
@@ -216,14 +219,20 @@ def grille_pleine():
 
 
 def fin_du_jeu():
-    """affiche quel joueur à gagner et arrête le jeu"""
-    global fin
-    fin = True
-    if id_joueur == 1:
-        label_gagnant.config(text=premier_joueur + " a gagné", font="20")
-    elif id_joueur == 2:
-        label_gagnant.config(text=deuxieme_joueur + " a gagné ", font="20")
-     
+    """affiche quel joueur à gagner et arrête le jeu OU 
+       BIEN """
+    global fin, une_manche
+    if une_manche == False:
+        fin = False
+        score()
+    if une_manche:
+        if id_joueur == 1:
+            label_gagnant.config(text=premier_joueur + " a gagné", font="20")
+        elif id_joueur == 2:
+            label_gagnant.config(text=deuxieme_joueur + " a gagné ", font="20")
+        label_joueur.config(text="")
+        fin = True
+
 
 def fin_du_jeu_nul():
     """affiche qu'il n'y a aucun joueur et arrête le jeu"""
@@ -254,7 +263,7 @@ def retour_1():
 
 
 def sauvegarde():
-    """ Ecrit la grille dans le fichier sauvegarde.txt """
+    """ Ecrit la grille dans le fichier sauvegarde.txt """ 
     global joueur_commence
     if joueur1:
         joueur_commence = premier_joueur  # joueur qui commence si on charge la partie
@@ -286,7 +295,7 @@ def charger():
             if i == "0" or i == "1" or i == "2":
                 grille1.append(int(i))
         if n_ligne > 6:
-            liste = ligne.split(",")  
+            liste = ligne.split(",")   # liste contient joueur qui commence, 1er et 2eme joueur
          
     for i in range(m):
         grille2.extend([[grille1[i] for i in range(n)]])
@@ -309,7 +318,57 @@ def charger():
 
 
 def set_match():
-    pass
+    """affiche label score si l'utilisateur 
+       choisit de faire une compétition"""
+    global label_score1, label_score2, label_manches, score1, score2, une_manche, nb_manches, nb_parties
+    une_manche = input("jeu en une seule manche ? taper oui ou non: ")
+    if une_manche == "non":
+        nb_manches = input("Taper le nombre de manches: ")
+        score1, score2 = 0, 0
+        label_score1 = tk.Label(racine, text="score de " + premier_joueur + ":" + str(score1), font="20")
+        label_score2 = tk.Label(racine, text="score de " + deuxieme_joueur + ":" + str(score2), font="20")
+        label_manches = tk.Label(racine, text="nombre de manches: " + nb_manches)
+        label_score1.grid(column=1, row=4)
+        label_score2.grid(column=1, row=5) 
+        label_manches.grid(column=1, row=3)
+        une_manche = False
+        nb_parties = 0
+
+def score():
+    """gère l'affichage des scores et renouvelle grille"""
+    global grille, une_manche, nb_manches, score1, score2, nb_parties, premier_joueur, deuxieme_joueur, joueur1
+    nb_parties += 1
+    label_manches.config(text="nombre de manches: " + str(nb_manches))
+    if id_joueur == 1:
+        score1 += 1
+        label_score1.config(text="score de " + premier_joueur + ":" + str(score1))
+        if score1 == int(nb_manches):
+            une_manche = True
+            fin_du_jeu()
+    elif id_joueur == 2:
+        score2 += 1
+        label_score2.config(text="score de " + deuxieme_joueur + ":" + str(score2))
+        if score2 == int(nb_manches):
+            une_manche = True
+            fin_du_jeu()
+    grille = []
+    for i in range(m):
+        grille.append([0]*n)
+    if nb_parties % 2 == 0:
+        joueur1 = True
+    else:
+        joueur1 = False
+    creation_grille()
+    change_premier_joueur()
+
+
+def change_premier_joueur():
+    """change le premier joueur qui joue à chaque manche gagnée"""
+    if nb_parties % 2 == 0:
+        label_joueur.config(text=premier_joueur + " commence à jouer")
+    else:
+        label_joueur.config(text=deuxieme_joueur + " commence à jouer")
+
 
 
 ######################
@@ -324,8 +383,6 @@ bouton_sauvegarde = tk.Button(racine, command=sauvegarde, text="sauvegarde")
 label_joueur = tk.Label(racine, text=" puissance 4 ", padx=20, pady=20,
                         borderwidth=5, font=("helvetica", "20")) 
 label_gagnant = tk.Label(racine)
-label_score1 = tk.Label(racine, text="score du premier joueur : 0", font="20")
-label_score2 = tk.Label(racine, text="score du deuxième joueur : 0", font="20")
 
 
 # positionnement des widgets
@@ -334,13 +391,13 @@ canvas.grid(rowspan=10)
 bouton_retour.grid(column=1, row=8)
 bouton_sauvegarde.grid(column=1, row=9, columnspan=2)
 label_joueur.grid(column=1, row=0)
-label_gagnant.grid(column=1, row=3)
-label_score1.grid(column=1, row=4)
-label_score2.grid(column=1, row=5) 
+label_gagnant.grid(column=1, row=2)
+
 
 # fonctions
 creation_grille()
 choix_partie()
+set_match()
 
 
 # gestions clic
